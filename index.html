@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login Cliente</title>
+  <link rel="icon" type="image/png" href="icons8-toro-48.png">
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+  <h1>Acceso Cliente</h1>
+  <form id="loginForm">
+    <input type="text" id="nombre" placeholder="Nombre" required />
+    <input type="number" id="mesa" placeholder="Número de mesa" required />
+    <input type="text" id="token" placeholder="Token" required />
+    <button type="submit">Entrar</button>
+  </form>
+  <p id="mensaje"></p>
+
+  <footer>
+    <p>&copy; 2025 Systems Department | Potenciando la calidad profesional</p>
+  </footer>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAFyGzysyKuakKbvxQ4-V_dImZzRIn6sCk",
+      authDomain: "proyectocamarasga.firebaseapp.com",
+      databaseURL: "https://proyectocamarasga-default-rtdb.firebaseio.com",
+      projectId: "proyectocamarasga",
+      storageBucket: "proyectocamarasga.appspot.com",
+      messagingSenderId: "234822313241",
+      appId: "1:234822313241:web:3989ed7953383848d69188",
+      measurementId: "G-MEGZ1G4ETH"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const loginForm = document.getElementById('loginForm');
+    const mensaje = document.getElementById('mensaje');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      mensaje.textContent = "";
+
+      const nombre = document.getElementById('nombre').value.trim();
+      const mesa = document.getElementById('mesa').value.trim();
+      const token = document.getElementById('token').value.trim();
+
+      if (!nombre || !mesa || !token) {
+        mensaje.textContent = "Completa todos los campos";
+        return;
+      }
+
+      try {
+        const snapshot = await db.ref('tokens/' + token).once('value');
+          if (!snapshot.exists()) {
+            mensaje.textContent = "Token inválido";
+            return;
+          }
+
+          const tokenData = snapshot.val();
+          const now = Date.now();
+
+          if (now > tokenData.expiracion) {
+            mensaje.textContent = "Token expirado";
+            return;
+          }
+
+          // Guardar información del cliente en la base de datos
+          const clienteInfo = {
+            nombre: nombre,
+            mesa: mesa,
+            token: token,
+            timestamp: Date.now()
+          };
+
+          await db.ref("clientes/" + token).push(clienteInfo);
+
+ 
+            // Cambiar el tiempo de expiración a 60 minutos (60 * 60 * 1000 ms)
+            const clienteExpiracion = now + 60 * 60 * 1000; // 60 minutos en milisegundos
+
+            // Guardar los datos en localStorage
+            localStorage.setItem('acceso_token', token);
+            localStorage.setItem('acceso_expiracion', tokenData.expiracion); // este viene de Firebase o backend, ok dejarlo
+            localStorage.setItem('token_cliente', token);
+            localStorage.setItem('cliente_expiracion', clienteExpiracion);
+            localStorage.setItem('cliente_nombre', nombre);
+            localStorage.setItem('cliente_mesa', mesa);
+
+
+          // Redirigir al video
+          window.location.href = 'video.html';
+
+      } catch (error) {
+        mensaje.textContent = "Error al validar token";
+        console.error(error);
+      }
+    });
+  </script>
+</body>
+</html>

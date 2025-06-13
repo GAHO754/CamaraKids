@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Video en Vivo</title>
+  <link rel="stylesheet" href="video-styles.css" />
+  <link rel="icon" type="image/png" href="icons8-toro-48.png">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <style>
+    /* Para que el iframe y video ocupen el mismo espacio */
+    .video-area iframe,
+    .video-area video {
+      width: 100%;
+      height: 360px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 class="header-title">Transmisión en Vivo</h1>
+  </header>
+
+  <main class="main-content">
+    <div class="stream-container">
+      <section class="video-area-container">
+        <div class="video-area" id="videoArea">
+          <!-- Aquí se insertará el video o iframe -->
+        </div>
+        <button id="logoutBtn">Cerrar Sesión</button>
+      </section>
+
+      <aside class="ad-area" id="ad-area">
+        <div id="timer">Tiempo restante: <span id="timeLeft">60:00</span></div>
+        <h2>Promociones</h2>
+        <div class="carousel">
+          <img class="promo-slide active" src="gal8.jpg" alt="Promo 1" />
+          <img class="promo-slide" src="gal6.jpg" alt="Promo 2" />
+          <img class="promo-slide" src="gal7.jpg" alt="Promo 3" />
+          <img class="promo-slide" src="gal9.jpg" alt="Promo 4" />
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Systems Department | Potenciando la calidad profesional</p>
+  </footer>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAFyGzysyKuakKbvxQ4-V_dImZzRIn6sCk",
+      authDomain: "proyectocamarasga.firebaseapp.com",
+      databaseURL: "https://proyectocamarasga-default-rtdb.firebaseio.com",
+      projectId: "proyectocamarasga",
+      storageBucket: "proyectocamarasga.appspot.com",
+      messagingSenderId: "234822313241",
+      appId: "1:234822313241:web:3989ed7953383848d69188",
+      measurementId: "G-MEGZ1G4ETH"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const videoArea = document.getElementById('videoArea');
+    const timeLeftSpan = document.getElementById('timeLeft');
+    const tokenKey = "token_cliente";
+
+    // URLs de video
+    const cameraHLS = 'http://192.168.1.6:8888/camerahik/index.m3u8';
+    const youtubeLive = 'https://www.youtube.com/embed/-QCC3Nucp8A?autoplay=1&modestbranding=1&rel=0&controls=1';
+
+    // Función para cargar video HLS
+    function cargarVideoHLS() {
+      return new Promise((resolve, reject) => {
+        if (!Hls.isSupported()) {
+          reject('HLS no soportado');
+          return;
+        }
+        // Crear video element
+        const video = document.createElement('video');
+        video.setAttribute('controls', '');
+        video.setAttribute('autoplay', '');
+        video.setAttribute('muted', '');
+        video.style.width = '100%';
+        video.style.height = '360px';
+
+        const hls = new Hls();
+        hls.loadSource(cameraHLS);
+        hls.attachMedia(video);
+
+        video.addEventListener('loadedmetadata', () => {
+          resolve(video);
+        });
+
+        video.addEventListener('error', (e) => {
+          reject('Error en reproducción de HLS');
+        });
+
+        setTimeout(() => {
+          reject('Timeout cargando video HLS');
+        }, 5000);
+      });
+    }
+
+    function cargarVideoYouTube() {
+  const contenedor = document.createElement('div');
+  contenedor.id = 'video-container';
+  contenedor.style.position = 'relative';
+  contenedor.style.width = '100%';
+  contenedor.style.height = '360px';
+
+  // Imagen previa del video (thumbnail)
+  const preview = document.createElement('img');
+  preview.src = 'https://img.youtube.com/vi/-QCC3Nucp8A/hqdefault.jpg';
+  preview.alt = 'Vista previa del video';
+  preview.style.width = '100%';
+  preview.style.height = '100%';
+  preview.style.objectFit = 'cover';
+
+  // Botón de play
+  const botonPlay = document.createElement('button');
+  botonPlay.textContent = '▶ Reproducir';
+  botonPlay.style.position = 'absolute';
+  botonPlay.style.top = '50%';
+  botonPlay.style.left = '50%';
+  botonPlay.style.transform = 'translate(-50%, -50%)';
+  botonPlay.style.fontSize = '24px';
+  botonPlay.style.padding = '10px 20px';
+  botonPlay.style.backgroundColor = 'red';
+  botonPlay.style.color = 'white';
+  botonPlay.style.border = 'none';
+  botonPlay.style.borderRadius = '8px';
+  botonPlay.style.cursor = 'pointer';
+  botonPlay.style.zIndex = '10';
+
+  botonPlay.addEventListener('click', () => {
+    
+    contenedor.innerHTML = `
+      <div style="position: relative; width: 100%; height: 360px;">
+        <iframe src="${youtubeLive}" 
+                frameborder="0" 
+                allow="autoplay; encrypted-media" 
+                allowfullscreen
+                style="width: 100%; height: 100%;"></iframe>
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;"></div>
+      </div>`;
+  });
+
+  contenedor.appendChild(preview);
+  contenedor.appendChild(botonPlay);
+  return contenedor;
+}
+
+
+
+
+    // Intentar cargar cámara primero, si falla, cargar YouTube
+    async function cargarVideoPreferido() {
+      try {
+        const videoHLS = await cargarVideoHLS();
+        videoArea.appendChild(videoHLS);
+      } catch (error) {
+        console.warn("No se pudo cargar video HLS, se usará YouTube en su lugar.", error);
+        const iframeYT = cargarVideoYouTube();
+        videoArea.appendChild(iframeYT);
+      }
+    }
+
+    // Temporizador de acceso (60 minutos forzado)
+    function actualizarTemporizador() {
+      const expiracion = parseInt(localStorage.getItem('cliente_expiracion')) || 0;
+      const ahora = Date.now();
+      const diferencia = expiracion - ahora;
+
+      if (diferencia <= 0) {
+        alert("Tu acceso ha expirado. Gracias por visitarnos.");
+        localStorage.clear();
+        window.location.href = "index.html";
+        return;
+      }
+
+      const minutos = Math.floor(diferencia / 60000);
+      const segundos = Math.floor((diferencia % 60000) / 1000);
+      timeLeftSpan.textContent = `${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+    }
+
+    function validarSesionCliente() {
+  const token = localStorage.getItem(tokenKey);
+  const ahora = Date.now();
+
+  // Solo asignar expiración si no está guardada aún
+  let clienteExpiracion = parseInt(localStorage.getItem('cliente_expiracion'));
+
+  if (!clienteExpiracion) {
+    clienteExpiracion = ahora + 60 * 60 * 1000; // 60 minutos
+    localStorage.setItem('cliente_expiracion', clienteExpiracion);
+  }
+
+  if (!token) {
+    alert("Sesión no válida. Inicia sesión nuevamente.");
+    localStorage.clear();
+    window.location.href = "index.html";
+    return;
+  }
+
+  db.ref("tokens/" + token).once("value").then(snapshot => {
+    const datos = snapshot.val();
+
+    if (!datos || ahora < datos.inicio || ahora > datos.expiracion) {
+      alert("Token inválido o fuera de su vigencia.");
+      localStorage.clear();
+      window.location.href = "index.html";
+      return;
+    }
+
+    cargarVideoPreferido();
+    actualizarTemporizador();
+
+    const intervalo = setInterval(() => {
+      const expiracionLocal = parseInt(localStorage.getItem('cliente_expiracion')) || 0;
+      const ahoraLocal = Date.now();
+      const diff = expiracionLocal - ahoraLocal;
+
+      if (diff <= 0) {
+        clearInterval(intervalo);
+        mostrarAccesoExpirado();
+      } else {
+        actualizarTemporizador();
+      }
+    }, 1000);
+
+  }).catch(error => {
+    console.error("Error al validar el token:", error);
+    alert("Error al validar la sesión.");
+    localStorage.clear();
+    window.location.href = "index.html";
+  });
+}
+
+
+    // Función para ocultar video y mostrar botón cuando el acceso expire
+    function mostrarAccesoExpirado() {
+      const videoArea = document.getElementById('videoArea');
+      videoArea.innerHTML = ''; // Quitar video
+
+              // Mostrar botón de volver al inicio (si no existe)
+        let botonInicio = document.getElementById('botonInicio');
+    if (!botonInicio) {
+      // Crear contenedor
+      const contenedorBoton = document.createElement('div');
+      contenedorBoton.id = 'contenedorBoton';
+      contenedorBoton.style.display = 'flex'; // Mostrar el contenedor
+
+      // Crear botón
+      botonInicio = document.createElement('button');
+      botonInicio.id = 'botonInicio';
+      botonInicio.textContent = 'Volver al inicio';
+
+      botonInicio.addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = 'index.html';
+      });
+
+      contenedorBoton.appendChild(botonInicio);
+      videoArea.appendChild(contenedorBoton);
+    }
+
+
+
+      // Ocultar botón logout porque ya no hay sesión
+      document.getElementById('logoutBtn').style.display = 'none';
+
+      // Actualizar el temporizador a 00:00
+      timeLeftSpan.textContent = '00:00';
+    }
+
+    validarSesionCliente();
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.clear();
+      window.location.href = "index.html";
+    });
+
+    // Carrusel de promociones
+    const slides = document.querySelectorAll('.promo-slide');
+    let currentIndex = 0;
+
+    function showNextSlide() {
+      slides[currentIndex].classList.remove('active');
+      currentIndex = (currentIndex + 1) % slides.length;
+      slides[currentIndex].classList.add('active');
+    }
+
+    setInterval(showNextSlide, 5000);
+
+    // Clasificar imágenes según su orientación
+    slides.forEach(img => {
+      img.addEventListener('load', () => {
+        const isHorizontal = img.naturalWidth >= img.naturalHeight;
+        img.classList.add(isHorizontal ? 'horizontal' : 'vertical');
+      });
+
+      // Por si ya están cargadas (caché)
+      if (img.complete) {
+        const isHorizontal = img.naturalWidth >= img.naturalHeight;
+        img.classList.add(isHorizontal ? 'horizontal' : 'vertical');
+      }
+    });
+  </script>
+</body>
+</html>
