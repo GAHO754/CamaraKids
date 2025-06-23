@@ -140,17 +140,25 @@
   botonPlay.style.zIndex = '10';
 
   botonPlay.addEventListener('click', () => {
-    
-    contenedor.innerHTML = `
-      <div style="position: relative; width: 100%; height: 360px;">
-        <iframe src="${youtubeLive}" 
-                frameborder="0" 
-                allow="autoplay; encrypted-media" 
-                allowfullscreen
-                style="width: 100%; height: 100%;"></iframe>
-        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;"></div>
-      </div>`;
-  });
+  contenedor.innerHTML = `
+    <div style="position: relative; width: 100%; height: 360px;">
+      <iframe src="${youtubeLive}" 
+              frameborder="0" 
+              allow="autoplay; encrypted-media" 
+              allowfullscreen
+              style="width: 100%; height: 100%;"></iframe>
+      <!-- Capa bloqueadora encima -->
+      <div style="
+        position: absolute;
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        height: 100%; 
+        background: transparent;
+        z-index: 10;
+      "></div>
+    </div>`;
+});
 
   contenedor.appendChild(preview);
   contenedor.appendChild(botonPlay);
