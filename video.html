@@ -113,6 +113,7 @@
   iframe.setAttribute('allowfullscreen', '');
   iframe.style.width = '100%';
   iframe.style.height = '360px';
+  iframe.style.pointerEvents = 'none';  // 👈 ¡Esto es clave!
   return iframe;
 
   // Imagen previa del video (thumbnail)
