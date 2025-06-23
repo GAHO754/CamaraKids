@@ -69,7 +69,7 @@
 
     // URLs de video
     const cameraHLS = 'http://192.168.1.6:8888/camerahik/index.m3u8';
-    const youtubeLive = 'https://www.youtube.com/embed/R9r_WSFEBR0?autoplay=1&modestbranding=1&rel=0&controls=1';
+    const youtubeLive = 'https://www.youtube.com/embed/R9r_WSFEBR0?autoplay=1&modestbranding=1&rel=0&controls=0';
 
 
     // Función para cargar video HLS
@@ -146,17 +146,7 @@
               frameborder="0" 
               allow="autoplay; encrypted-media" 
               allowfullscreen
-              style="width: 100%; height: 100%;"></iframe>
-      <!-- Capa bloqueadora encima -->
-      <div style="
-        position: absolute;
-        top: 0; 
-        left: 0; 
-        width: 100%; 
-        height: 100%; 
-        background: transparent;
-        z-index: 10;
-      "></div>
+              style="width: 100%; height: 100%; pointer-events: none;"></iframe>
     </div>`;
 });
 
