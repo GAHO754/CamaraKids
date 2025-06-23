@@ -69,7 +69,7 @@
 
     // URLs de video
     const cameraHLS = 'http://192.168.1.6:8888/camerahik/index.m3u8';
-    const youtubeLive = 'https://www.youtube.com/embed/-QCC3Nucp8A?autoplay=1&modestbranding=1&rel=0&controls=1';
+    const youtubeLive = 'https://www.youtube.com/embed/ta8AUZv7hqQ?autoplay=1&modestbranding=1&rel=0&controls=1';
 
     // Función para cargar video HLS
     function cargarVideoHLS() {
@@ -105,11 +105,14 @@
     }
 
     function cargarVideoYouTube() {
-  const contenedor = document.createElement('div');
-  contenedor.id = 'video-container';
-  contenedor.style.position = 'relative';
-  contenedor.style.width = '100%';
-  contenedor.style.height = '360px';
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('src', youtubeLive);
+  iframe.setAttribute('frameborder', '0');
+  iframe.setAttribute('allow', 'autoplay; encrypted-media');
+  iframe.setAttribute('allowfullscreen', '');
+  iframe.style.width = '100%';
+  iframe.style.height = '360px';
+  return iframe;
 
   // Imagen previa del video (thumbnail)
   const preview = document.createElement('img');
@@ -152,9 +155,6 @@
   contenedor.appendChild(botonPlay);
   return contenedor;
 }
-
-
-
 
     // Intentar cargar cámara primero, si falla, cargar YouTube
     async function cargarVideoPreferido() {
