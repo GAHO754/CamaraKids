@@ -67,11 +67,12 @@
     const tokenKey = "token_cliente";
 
     // 👉 CAMBIA SOLO ESTE ID si quieres otro video:
-    const youtubeID = 'R9r_WSFEBR0';
+   // 👉 CAMBIA SOLO ESTA LÍNEA:
+const youtubeID = '85VwtcEotJ0';
 
-    // URLs
-    const cameraHLS = 'http://192.168.1.6:8888/camerahik/index.m3u8';
-    const youtubeLive = `https://www.youtube.com/embed/${youtubeID}?autoplay=1&modestbranding=1&rel=0&controls=0`;
+// El resto del código NO CAMBIA:
+const youtubeLive = `https://www.youtube.com/embed/${youtubeID}?autoplay=1&modestbranding=1&rel=0&controls=0`;
+
 
     // Función para cargar video HLS
     function cargarVideoHLS() {
