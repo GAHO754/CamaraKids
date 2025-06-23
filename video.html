@@ -314,50 +314,6 @@
 
     // === Control de ubicación: restringir acceso si sale del restaurante ===
 
-// Coordenadas del restaurante (ajusta si cambian)
-const restauranteLat = 31.7380619;
-const restauranteLon = -106.434616;
-const alcanceMetros = 100;
-
-// Cálculo de distancia Haversine
-function calcularDistancia(lat1, lon1, lat2, lon2) {
-  const R = 6371e3;
-  const rad = Math.PI / 180;
-  const dLat = (lat2 - lat1) * rad;
-  const dLon = (lon2 - lon1) * rad;
-  const a = Math.sin(dLat / 2) ** 2 +
-            Math.cos(lat1 * rad) * Math.cos(lat2 * rad) *
-            Math.sin(dLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-function verificarUbicacion() {
-  if (!navigator.geolocation) {
-    console.warn("Geolocalización no soportada.");
-    return;
-  }
-
-  navigator.geolocation.getCurrentPosition(position => {
-    const latCliente = position.coords.latitude;
-    const lonCliente = position.coords.longitude;
-
-    const distancia = calcularDistancia(latCliente, lonCliente, restauranteLat, restauranteLon);
-    console.log(`📍 Cliente a ${distancia.toFixed(1)} metros del restaurante.`);
-
-    if (distancia > alcanceMetros) {
-      alert("🚫 Estás fuera del restaurante. El acceso ha sido finalizado.");
-      localStorage.clear();
-      window.location.href = "index.html";
-    }
-  }, error => {
-    console.error("Error de ubicación:", error.message);
-    alert("⚠️ No se pudo obtener tu ubicación. Por seguridad se cerrará el acceso.");
-    localStorage.clear();
-    window.location.href = "index.html";
-  });
-}
-
 // Verificar al cargar y cada 30 segundos
 verificarUbicacion();
 setInterval(verificarUbicacion, 30000);
