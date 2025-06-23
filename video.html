@@ -69,7 +69,7 @@
 
     // URLs de video
     const cameraHLS = 'http://192.168.1.6:8888/camerahik/index.m3u8';
-    const youtubeLive = 'https://www.youtube.com/embed/R9r_WSFEBR0?autoplay=1&modestbranding=1&rel=0&controls=0';
+    const youtubeLive = 'https://www.youtube.com/embed/85VwtcEotJ0?autoplay=1&modestbranding=1&rel=0&controls=0';
 
 
     // Función para cargar video HLS
@@ -116,47 +116,51 @@
   return iframe;
 
   // Imagen previa del video (thumbnail)
-  const preview = document.createElement('img');
-  preview.src = 'https://img.youtube.com/vi/R9r_WSFEBR0/hqdefault.jpg';
-  preview.alt = 'Vista previa del video';
-  preview.style.width = '100%';
-  preview.style.height = '100%';
-  preview.style.objectFit = 'cover';
+const preview = document.createElement('img');
+preview.src = 'https://img.youtube.com/vi/85VwtcEotJ0/hqdefault.jpg';
+preview.alt = 'Vista previa del video';
+preview.style.width = '100%';
+preview.style.height = '100%';
+preview.style.objectFit = 'cover';
 
-  // Botón de play
-  const botonPlay = document.createElement('button');
-  botonPlay.textContent = '▶ Reproducir';
-  botonPlay.style.position = 'absolute';
-  botonPlay.style.top = '50%';
-  botonPlay.style.left = '50%';
-  botonPlay.style.transform = 'translate(-50%, -50%)';
-  botonPlay.style.fontSize = '24px';
-  botonPlay.style.padding = '10px 20px';
-  botonPlay.style.backgroundColor = 'red';
-  botonPlay.style.color = 'white';
-  botonPlay.style.border = 'none';
-  botonPlay.style.borderRadius = '8px';
-  botonPlay.style.cursor = 'pointer';
-  botonPlay.style.zIndex = '10';
+// Botón de play
+const botonPlay = document.createElement('button');
+botonPlay.textContent = '▶ Reproducir';
+botonPlay.style.position = 'absolute';
+botonPlay.style.top = '50%';
+botonPlay.style.left = '50%';
+botonPlay.style.transform = 'translate(-50%, -50%)';
+botonPlay.style.fontSize = '24px';
+botonPlay.style.padding = '10px 20px';
+botonPlay.style.backgroundColor = 'red';
+botonPlay.style.color = 'white';
+botonPlay.style.border = 'none';
+botonPlay.style.borderRadius = '8px';
+botonPlay.style.cursor = 'pointer';
+botonPlay.style.zIndex = '10';
 
-  botonPlay.addEventListener('click', () => {
+// Contenedor principal
+const contenedor = document.createElement('div');
+contenedor.style.position = 'relative';
+contenedor.style.width = '100%';
+contenedor.style.height = '360px';
+
+botonPlay.addEventListener('click', () => {
   contenedor.innerHTML = `
-    <div style="position: relative; width: 100%; height: 360px;">
-      <iframe src="${youtubeLive}" 
-              frameborder="0" 
-              allow="autoplay; encrypted-media" 
-              allowfullscreen
-              style="width: 100%; height: 100%; pointer-events: none;"></iframe>
-    </div>`;
+    <iframe src="${youtubeLive}" 
+      frameborder="0"
+      allow="autoplay; encrypted-media"
+      allowfullscreen
+      style="width: 100%; height: 100%; pointer-events: none;">
+    </iframe>`;
 });
 
-  contenedor.appendChild(preview);
-  contenedor.appendChild(botonPlay);
-  return contenedor;
-}
+// Agregar elementos
+contenedor.appendChild(preview);
+contenedor.appendChild(botonPlay);
 
-
-
+// Devuelve el contenedor armado
+return contenedor;
 
     // Intentar cargar cámara primero, si falla, cargar YouTube
     async function cargarVideoPreferido() {
