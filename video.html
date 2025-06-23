@@ -69,7 +69,7 @@
 
     // URLs de video
     const cameraHLS = 'http://192.168.1.6:8888/camerahik/index.m3u8';
-    const youtubeLive = 'https://www.youtube.com/embed/R9r_WSFEBR0?autoplay=1&modestbranding=1&rel=0&controls=1';
+    const youtubeLive = 'https://www.youtube.com/embed/-QCC3Nucp8A?autoplay=1&modestbranding=1&rel=0&controls=1';
 
     // Función para cargar video HLS
     function cargarVideoHLS() {
@@ -105,14 +105,11 @@
     }
 
     function cargarVideoYouTube() {
-  const iframe = document.createElement('iframe');
-  iframe.setAttribute('src', youtubeLive);
-  iframe.setAttribute('frameborder', '0');
-  iframe.setAttribute('allow', 'autoplay; encrypted-media');
-  iframe.setAttribute('allowfullscreen', '');
-  iframe.style.width = '100%';
-  iframe.style.height = '360px';
-  return iframe;
+  const contenedor = document.createElement('div');
+  contenedor.id = 'video-container';
+  contenedor.style.position = 'relative';
+  contenedor.style.width = '100%';
+  contenedor.style.height = '360px';
 
   // Imagen previa del video (thumbnail)
   const preview = document.createElement('img');
@@ -155,6 +152,9 @@
   contenedor.appendChild(botonPlay);
   return contenedor;
 }
+
+
+
 
     // Intentar cargar cámara primero, si falla, cargar YouTube
     async function cargarVideoPreferido() {
@@ -308,6 +308,59 @@
         img.classList.add(isHorizontal ? 'horizontal' : 'vertical');
       }
     });
+
+    // === Control de ubicación: restringir acceso si sale del restaurante ===
+
+// Coordenadas del restaurante (ajusta si cambian)
+const restauranteLat = 31.7392386;
+const restauranteLon = -106.4878944;
+const alcanceMetros = 50;
+
+// Cálculo de distancia Haversine
+function calcularDistancia(lat1, lon1, lat2, lon2) {
+  const R = 6371e3;
+  const rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad;
+  const dLon = (lon2 - lon1) * rad;
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(lat1 * rad) * Math.cos(lat2 * rad) *
+            Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function verificarUbicacion() {
+  if (!navigator.geolocation) {
+    console.warn("Geolocalización no soportada.");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(position => {
+    const latCliente = position.coords.latitude;
+    const lonCliente = position.coords.longitude;
+
+    const distancia = calcularDistancia(latCliente, lonCliente, restauranteLat, restauranteLon);
+    console.log(`📍 Cliente a ${distancia.toFixed(1)} metros del restaurante.`);
+
+    if (distancia > alcanceMetros) {
+      alert("🚫 Estás fuera del restaurante. El acceso ha sido finalizado.");
+      localStorage.clear();
+      window.location.href = "index.html";
+    }
+  }, error => {
+    console.error("Error de ubicación:", error.message);
+    alert("⚠️ No se pudo obtener tu ubicación. Por seguridad se cerrará el acceso.");
+    localStorage.clear();
+    window.location.href = "index.html";
+  });
+}
+
+// Verificar al cargar y cada 30 segundos
+verificarUbicacion();
+setInterval(verificarUbicacion, 30000);
+
+
+
   </script>
 </body>
 </html>
