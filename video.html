@@ -71,6 +71,7 @@
     const cameraHLS = 'http://192.168.1.6:8888/camerahik/index.m3u8';
     const youtubeLive = 'https://www.youtube.com/embed/R9r_WSFEBR0?autoplay=1&modestbranding=1&rel=0&controls=1';
 
+
     // Función para cargar video HLS
     function cargarVideoHLS() {
       return new Promise((resolve, reject) => {
@@ -116,7 +117,7 @@
 
   // Imagen previa del video (thumbnail)
   const preview = document.createElement('img');
-  preview.src = 'https://img.youtube.com/vi/-QCC3Nucp8A/hqdefault.jpg';
+  preview.src = 'https://img.youtube.com/vi/R9r_WSFEBR0/hqdefault.jpg';
   preview.alt = 'Vista previa del video';
   preview.style.width = '100%';
   preview.style.height = '100%';
@@ -311,14 +312,6 @@
         img.classList.add(isHorizontal ? 'horizontal' : 'vertical');
       }
     });
-
-    // === Control de ubicación: restringir acceso si sale del restaurante ===
-
-// Verificar al cargar y cada 30 segundos
-verificarUbicacion();
-setInterval(verificarUbicacion, 30000);
-
-
 
   </script>
 </body>
