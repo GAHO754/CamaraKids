@@ -86,7 +86,8 @@
         ubicacionPermitida.lat, ubicacionPermitida.lng
       );
 
-      const radioPermitido = 70; // 🎯 Ahora son 70 metros
+      const radioPermitido = 150; // 🎯 actualizado a 100 metros
+
 
       if (distancia > radioPermitido) {
         mensaje.textContent = `Estás fuera de la zona permitida (${Math.round(distancia)}m).`;
