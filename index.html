@@ -23,128 +23,82 @@
   </footer>
 
   <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAFyGzysyKuakKbvxQ4-V_dImZzRIn6sCk",
-    authDomain: "proyectocamarasga.firebaseapp.com",
-    databaseURL: "https://proyectocamarasga-default-rtdb.firebaseio.com",
-    projectId: "proyectocamarasga",
-    storageBucket: "proyectocamarasga.appspot.com",
-    messagingSenderId: "234822313241",
-    appId: "1:234822313241:web:3989ed7953383848d69188",
-    measurementId: "G-MEGZ1G4ETH"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyAFyGzysyKuakKbvxQ4-V_dImZzRIn6sCk",
+      authDomain: "proyectocamarasga.firebaseapp.com",
+      databaseURL: "https://proyectocamarasga-default-rtdb.firebaseio.com",
+      projectId: "proyectocamarasga",
+      storageBucket: "proyectocamarasga.appspot.com",
+      messagingSenderId: "234822313241",
+      appId: "1:234822313241:web:3989ed7953383848d69188",
+      measurementId: "G-MEGZ1G4ETH"
+    };
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-  const loginForm = document.getElementById('loginForm');
-  const mensaje = document.getElementById('mensaje');
+    const loginForm = document.getElementById('loginForm');
+    const mensaje = document.getElementById('mensaje');
 
-  // 📍 Coordenadas reales del restaurante
-  const ubicacionPermitida = {
-    lat: 31.733739,
-    lng: -106.437678
-  };
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      mensaje.textContent = "";
 
-  function calcularDistancia(lat1, lon1, lat2, lon2) {
-    const R = 6371000;
-    const rad = Math.PI / 180;
-    const dLat = (lat2 - lat1) * rad;
-    const dLon = (lon2 - lon1) * rad;
-    const a = Math.sin(dLat / 2) ** 2 +
-              Math.cos(lat1 * rad) * Math.cos(lat2 * rad) *
-              Math.sin(dLon / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
+      const nombre = document.getElementById('nombre').value.trim();
+      const mesa = document.getElementById('mesa').value.trim();
+      const token = document.getElementById('token').value.trim();
 
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    mensaje.textContent = "";
-
-    const nombre = document.getElementById('nombre').value.trim();
-    const mesa = document.getElementById('mesa').value.trim();
-    const token = document.getElementById('token').value.trim();
-
-    if (!nombre || !mesa || !token) {
-      mensaje.textContent = "Completa todos los campos";
-      return;
-    }
-
-    if (!navigator.geolocation) {
-      mensaje.textContent = "Tu navegador no soporta geolocalización.";
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const latUsuario = position.coords.latitude;
-      const lonUsuario = position.coords.longitude;
-
-      const distancia = calcularDistancia(
-        latUsuario, lonUsuario,
-        ubicacionPermitida.lat, ubicacionPermitida.lng
-      );
-
-      const radioPermitido = 200; // 🎯 actualizado a 200 metros
-
-      if (distancia > radioPermitido) {
-        mensaje.textContent = `Estás fuera de la zona permitida (${Math.round(distancia)}m).`;
+      if (!nombre || !mesa || !token) {
+        mensaje.textContent = "Completa todos los campos";
         return;
       }
 
-      // Mostrar ubicación y distancia detectada en pantalla (opcional)
-      const debug = document.createElement('div');
-      debug.style.color = 'gray';
-      debug.style.fontSize = '12px';
-      debug.style.marginTop = '10px';
-      debug.innerText = `📍 Tu ubicación detectada: ${latUsuario.toFixed(6)}, ${lonUsuario.toFixed(6)}\n📏 Distancia al restaurante: ${Math.round(distancia)} metros`;
-      mensaje.appendChild(debug);
-
       try {
         const snapshot = await db.ref('tokens/' + token).once('value');
-        if (!snapshot.exists()) {
-          mensaje.textContent = "Token inválido";
-          return;
-        }
+          if (!snapshot.exists()) {
+            mensaje.textContent = "Token inválido";
+            return;
+          }
 
-        const tokenData = snapshot.val();
-        const now = Date.now();
+          const tokenData = snapshot.val();
+          const now = Date.now();
 
-        if (now > tokenData.expiracion) {
-          mensaje.textContent = "Token expirado";
-          return;
-        }
+          if (now > tokenData.expiracion) {
+            mensaje.textContent = "Token expirado";
+            return;
+          }
 
-        const clienteInfo = {
-          nombre: nombre,
-          mesa: mesa,
-          token: token,
-          timestamp: now
-        };
+          // Guardar información del cliente en la base de datos
+          const clienteInfo = {
+            nombre: nombre,
+            mesa: mesa,
+            token: token,
+            timestamp: Date.now()
+          };
 
-        await db.ref("clientes/" + token).push(clienteInfo);
+          await db.ref("clientes/" + token).push(clienteInfo);
 
-        const clienteExpiracion = now + 60 * 60 * 1000;
+ 
+            // Cambiar el tiempo de expiración a 60 minutos (60 * 60 * 1000 ms)
+            const clienteExpiracion = now + 60 * 60 * 1000; // 60 minutos en milisegundos
 
-        localStorage.setItem('acceso_token', token);
-        localStorage.setItem('acceso_expiracion', tokenData.expiracion);
-        localStorage.setItem('token_cliente', token);
-        localStorage.setItem('cliente_expiracion', clienteExpiracion);
-        localStorage.setItem('cliente_nombre', nombre);
-        localStorage.setItem('cliente_mesa', mesa);
+            // Guardar los datos en localStorage
+            localStorage.setItem('acceso_token', token);
+            localStorage.setItem('acceso_expiracion', tokenData.expiracion); // este viene de Firebase o backend, ok dejarlo
+            localStorage.setItem('token_cliente', token);
+            localStorage.setItem('cliente_expiracion', clienteExpiracion);
+            localStorage.setItem('cliente_nombre', nombre);
+            localStorage.setItem('cliente_mesa', mesa);
 
-        window.location.href = 'video.html';
+
+          // Redirigir al video
+          window.location.href = 'video.html';
 
       } catch (error) {
         mensaje.textContent = "Error al validar token";
         console.error(error);
       }
-
-    }, () => {
-      mensaje.textContent = "No pudimos obtener tu ubicación. Activa GPS o da permisos.";
     });
-  });
-</script>
-
+  </script>
 </body>
 </html>
