@@ -23,82 +23,121 @@
   </footer>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAFyGzysyKuakKbvxQ4-V_dImZzRIn6sCk",
-      authDomain: "proyectocamarasga.firebaseapp.com",
-      databaseURL: "https://proyectocamarasga-default-rtdb.firebaseio.com",
-      projectId: "proyectocamarasga",
-      storageBucket: "proyectocamarasga.appspot.com",
-      messagingSenderId: "234822313241",
-      appId: "1:234822313241:web:3989ed7953383848d69188",
-      measurementId: "G-MEGZ1G4ETH"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyAFyGzysyKuakKbvxQ4-V_dImZzRIn6sCk",
+    authDomain: "proyectocamarasga.firebaseapp.com",
+    databaseURL: "https://proyectocamarasga-default-rtdb.firebaseio.com",
+    projectId: "proyectocamarasga",
+    storageBucket: "proyectocamarasga.appspot.com",
+    messagingSenderId: "234822313241",
+    appId: "1:234822313241:web:3989ed7953383848d69188",
+    measurementId: "G-MEGZ1G4ETH"
+  };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-    const loginForm = document.getElementById('loginForm');
-    const mensaje = document.getElementById('mensaje');
+  const loginForm = document.getElementById('loginForm');
+  const mensaje = document.getElementById('mensaje');
 
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      mensaje.textContent = "";
+  // 📍 Coordenadas del restaurante
+  const ubicacionPermitida = {
+    lat: 31.7380618,
+    lng: -106.4371909
+  };
 
-      const nombre = document.getElementById('nombre').value.trim();
-      const mesa = document.getElementById('mesa').value.trim();
-      const token = document.getElementById('token').value.trim();
+  // Calcular distancia (en metros) entre dos puntos GPS
+  function calcularDistancia(lat1, lon1, lat2, lon2) {
+    const R = 6371000; // Radio Tierra en metros
+    const rad = Math.PI / 180;
+    const dLat = (lat2 - lat1) * rad;
+    const dLon = (lon2 - lon1) * rad;
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(lat1 * rad) * Math.cos(lat2 * rad) *
+              Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
 
-      if (!nombre || !mesa || !token) {
-        mensaje.textContent = "Completa todos los campos";
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    mensaje.textContent = "";
+
+    const nombre = document.getElementById('nombre').value.trim();
+    const mesa = document.getElementById('mesa').value.trim();
+    const token = document.getElementById('token').value.trim();
+
+    if (!nombre || !mesa || !token) {
+      mensaje.textContent = "Completa todos los campos";
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      mensaje.textContent = "Tu navegador no soporta geolocalización.";
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const latUsuario = position.coords.latitude;
+      const lonUsuario = position.coords.longitude;
+
+      const distancia = calcularDistancia(
+        latUsuario, lonUsuario,
+        ubicacionPermitida.lat, ubicacionPermitida.lng
+      );
+
+      const radioPermitido = 70; // 🎯 Ahora son 70 metros
+
+      if (distancia > radioPermitido) {
+        mensaje.textContent = `Estás fuera de la zona permitida (${Math.round(distancia)}m).`;
         return;
       }
 
       try {
         const snapshot = await db.ref('tokens/' + token).once('value');
-          if (!snapshot.exists()) {
-            mensaje.textContent = "Token inválido";
-            return;
-          }
+        if (!snapshot.exists()) {
+          mensaje.textContent = "Token inválido";
+          return;
+        }
 
-          const tokenData = snapshot.val();
-          const now = Date.now();
+        const tokenData = snapshot.val();
+        const now = Date.now();
 
-          if (now > tokenData.expiracion) {
-            mensaje.textContent = "Token expirado";
-            return;
-          }
+        if (now > tokenData.expiracion) {
+          mensaje.textContent = "Token expirado";
+          return;
+        }
 
-          // Guardar información del cliente en la base de datos
-          const clienteInfo = {
-            nombre: nombre,
-            mesa: mesa,
-            token: token,
-            timestamp: Date.now()
-          };
+        const clienteInfo = {
+          nombre: nombre,
+          mesa: mesa,
+          token: token,
+          timestamp: now
+        };
 
-          await db.ref("clientes/" + token).push(clienteInfo);
+        await db.ref("clientes/" + token).push(clienteInfo);
 
- 
-            // Cambiar el tiempo de expiración a 60 minutos (60 * 60 * 1000 ms)
-            const clienteExpiracion = now + 60 * 60 * 1000; // 60 minutos en milisegundos
+        const clienteExpiracion = now + 60 * 60 * 1000;
 
-            // Guardar los datos en localStorage
-            localStorage.setItem('acceso_token', token);
-            localStorage.setItem('acceso_expiracion', tokenData.expiracion); // este viene de Firebase o backend, ok dejarlo
-            localStorage.setItem('token_cliente', token);
-            localStorage.setItem('cliente_expiracion', clienteExpiracion);
-            localStorage.setItem('cliente_nombre', nombre);
-            localStorage.setItem('cliente_mesa', mesa);
+        localStorage.setItem('acceso_token', token);
+        localStorage.setItem('acceso_expiracion', tokenData.expiracion);
+        localStorage.setItem('token_cliente', token);
+        localStorage.setItem('cliente_expiracion', clienteExpiracion);
+        localStorage.setItem('cliente_nombre', nombre);
+        localStorage.setItem('cliente_mesa', mesa);
 
-
-          // Redirigir al video
-          window.location.href = 'video.html';
+        window.location.href = 'video.html';
 
       } catch (error) {
         mensaje.textContent = "Error al validar token";
         console.error(error);
       }
+
+    }, () => {
+      mensaje.textContent = "No pudimos obtener tu ubicación. Activa GPS o da permisos.";
     });
-  </script>
+  });
+</script>
+
 </body>
 </html>
