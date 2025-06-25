@@ -40,15 +40,14 @@
   const loginForm = document.getElementById('loginForm');
   const mensaje = document.getElementById('mensaje');
 
-  // 📍 Coordenadas del restaurante
+  // 📍 Coordenadas reales del restaurante
   const ubicacionPermitida = {
-    lat: 31.7380618,
-    lng: -106.4371909
+    lat: 31.733739,
+    lng: -106.437678
   };
 
-  // Calcular distancia (en metros) entre dos puntos GPS
   function calcularDistancia(lat1, lon1, lat2, lon2) {
-    const R = 6371000; // Radio Tierra en metros
+    const R = 6371000;
     const rad = Math.PI / 180;
     const dLat = (lat2 - lat1) * rad;
     const dLon = (lon2 - lon1) * rad;
@@ -86,8 +85,7 @@
         ubicacionPermitida.lat, ubicacionPermitida.lng
       );
 
-      const radioPermitido = 150; // 🎯 actualizado a 100 metros
-
+      const radioPermitido = 100; // 🎯 actualizado a 100 metros
 
       if (distancia > radioPermitido) {
         mensaje.textContent = `Estás fuera de la zona permitida (${Math.round(distancia)}m).`;
@@ -139,6 +137,7 @@
     });
   });
 </script>
+
 
 </body>
 </html>
