@@ -85,12 +85,20 @@
         ubicacionPermitida.lat, ubicacionPermitida.lng
       );
 
-      const radioPermitido = 100; // 🎯 actualizado a 100 metros
+      const radioPermitido = 200; // 🎯 actualizado a 200 metros
 
       if (distancia > radioPermitido) {
         mensaje.textContent = `Estás fuera de la zona permitida (${Math.round(distancia)}m).`;
         return;
       }
+
+      // Mostrar ubicación y distancia detectada en pantalla (opcional)
+      const debug = document.createElement('div');
+      debug.style.color = 'gray';
+      debug.style.fontSize = '12px';
+      debug.style.marginTop = '10px';
+      debug.innerText = `📍 Tu ubicación detectada: ${latUsuario.toFixed(6)}, ${lonUsuario.toFixed(6)}\n📏 Distancia al restaurante: ${Math.round(distancia)} metros`;
+      mensaje.appendChild(debug);
 
       try {
         const snapshot = await db.ref('tokens/' + token).once('value');
@@ -137,7 +145,6 @@
     });
   });
 </script>
-
 
 </body>
 </html>
