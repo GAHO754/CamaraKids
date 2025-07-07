@@ -49,267 +49,185 @@
   </footer>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAFyGzysyKuakKbvxQ4-V_dImZzRIn6sCk",
-      authDomain: "proyectocamarasga.firebaseapp.com",
-      databaseURL: "https://proyectocamarasga-default-rtdb.firebaseio.com",
-      projectId: "proyectocamarasga",
-      storageBucket: "proyectocamarasga.appspot.com",
-      messagingSenderId: "234822313241",
-      appId: "1:234822313241:web:3989ed7953383848d69188",
-      measurementId: "G-MEGZ1G4ETH"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyAFyGzysyKuakKbvxQ4-V_dImZzRIn6sCk",
+    authDomain: "proyectocamarasga.firebaseapp.com",
+    databaseURL: "https://proyectocamarasga-default-rtdb.firebaseio.com",
+    projectId: "proyectocamarasga",
+    storageBucket: "proyectocamarasga.appspot.com",
+    messagingSenderId: "234822313241",
+    appId: "1:234822313241:web:3989ed7953383848d69188",
+    measurementId: "G-MEGZ1G4ETH"
+  };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-    const videoArea = document.getElementById('videoArea');
-    const timeLeftSpan = document.getElementById('timeLeft');
-    const tokenKey = "token_cliente";
+  const videoArea = document.getElementById('videoArea');
+  const timeLeftSpan = document.getElementById('timeLeft');
+  const tokenKey = "token_cliente";
 
-    // URLs de video
-    const cameraHLS = 'https://192.168.1.3:8080/stream.m3u8';
+  const cameraHLS = 'https://192.168.1.3:8080/stream.m3u8'; // Dirección de tu cámara (con HLS generado)
 
-    // Función para cargar video HLS
-    function cargarVideoHLS() {
-      return new Promise((resolve, reject) => {
-        if (!Hls.isSupported()) {
-          reject('HLS no soportado');
-          return;
-        }
-        // Crear video element
-        const video = document.createElement('video');
-        video.setAttribute('controls', '');
-        video.setAttribute('autoplay', '');
-        video.setAttribute('muted', '');
-        video.style.width = '100%';
-        video.style.height = '360px';
+  // Función para cargar video HLS
+  function cargarVideoHLS() {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.controls = true;
+      video.autoplay = true;
+      video.muted = true;
+      video.style.width = '100%';
+      video.style.height = '360px';
 
+      if (Hls.isSupported()) {
         const hls = new Hls();
         hls.loadSource(cameraHLS);
         hls.attachMedia(video);
 
-        video.addEventListener('loadedmetadata', () => {
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
           resolve(video);
         });
 
-        video.addEventListener('error', (e) => {
-          reject('Error en reproducción de HLS');
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          console.error("❌ Error HLS.js:", data);
+          reject("Error al cargar el video.");
         });
 
-        setTimeout(() => {
-          reject('Timeout cargando video HLS');
-        }, 5000);
-      });
-    }
-
-    function cargarVideoYouTube() {
-  const iframe = document.createElement('iframe');
-  iframe.setAttribute('src', youtubeLive);
-  iframe.setAttribute('frameborder', '0');
-  iframe.setAttribute('allow', 'autoplay; encrypted-media');
-  iframe.setAttribute('allowfullscreen', '');
-  iframe.style.width = '100%';
-  iframe.style.height = '360px';
-  return iframe;
-
-  // Imagen previa del video (thumbnail)
-  const preview = document.createElement('img');
-  preview.src = 'https://img.youtube.com/vi/R9r_WSFEBR0/hqdefault.jpg';
-  preview.alt = 'Vista previa del video';
-  preview.style.width = '100%';
-  preview.style.height = '100%';
-  preview.style.objectFit = 'cover';
-
-  // Botón de play
-  const botonPlay = document.createElement('button');
-  botonPlay.textContent = '▶ Reproducir';
-  botonPlay.style.position = 'absolute';
-  botonPlay.style.top = '50%';
-  botonPlay.style.left = '50%';
-  botonPlay.style.transform = 'translate(-50%, -50%)';
-  botonPlay.style.fontSize = '24px';
-  botonPlay.style.padding = '10px 20px';
-  botonPlay.style.backgroundColor = 'red';
-  botonPlay.style.color = 'white';
-  botonPlay.style.border = 'none';
-  botonPlay.style.borderRadius = '8px';
-  botonPlay.style.cursor = 'pointer';
-  botonPlay.style.zIndex = '10';
-
-  botonPlay.addEventListener('click', () => {
-    
-    contenedor.innerHTML = `
-      <div style="position: relative; width: 100%; height: 360px;">
-        <iframe src="${youtubeLive}" 
-                frameborder="0" 
-                allow="autoplay; encrypted-media" 
-                allowfullscreen
-                style="width: 100%; height: 100%;"></iframe>
-        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;"></div>
-      </div>`;
-  });
-
-  contenedor.appendChild(preview);
-  contenedor.appendChild(botonPlay);
-  return contenedor;
-}
-
-
-
-
-    // Intentar cargar cámara primero, si falla, cargar YouTube
-    async function cargarVideoPreferido() {
-      try {
-        const videoHLS = await cargarVideoHLS();
-        videoArea.appendChild(videoHLS);
-      } catch (error) {
-        console.warn("No se pudo cargar video HLS, se usará YouTube en su lugar.", error);
-        const iframeYT = cargarVideoYouTube();
-        videoArea.appendChild(iframeYT);
+        setTimeout(() => reject("Timeout cargando video"), 10000);
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = cameraHLS;
+        resolve(video);
+      } else {
+        reject("Tu navegador no soporta HLS");
       }
-    }
-
-    // Temporizador de acceso (60 minutos forzado)
-    function actualizarTemporizador() {
-      const expiracion = parseInt(localStorage.getItem('cliente_expiracion')) || 0;
-      const ahora = Date.now();
-      const diferencia = expiracion - ahora;
-
-      if (diferencia <= 0) {
-        alert("Tu acceso ha expirado. Gracias por visitarnos.");
-        localStorage.clear();
-        window.location.href = "index.html";
-        return;
-      }
-
-      const minutos = Math.floor(diferencia / 60000);
-      const segundos = Math.floor((diferencia % 60000) / 1000);
-      timeLeftSpan.textContent = `${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
-    }
-
-    function validarSesionCliente() {
-  const token = localStorage.getItem(tokenKey);
-  const ahora = Date.now();
-
-  // Solo asignar expiración si no está guardada aún
-  let clienteExpiracion = parseInt(localStorage.getItem('cliente_expiracion'));
-
-  if (!clienteExpiracion) {
-    clienteExpiracion = ahora + 60 * 60 * 1000; // 60 minutos
-    localStorage.setItem('cliente_expiracion', clienteExpiracion);
+    });
   }
 
-  if (!token) {
-    alert("Sesión no válida. Inicia sesión nuevamente.");
-    localStorage.clear();
-    window.location.href = "index.html";
-    return;
+  async function cargarVideo() {
+    try {
+      const videoHLS = await cargarVideoHLS();
+      videoArea.appendChild(videoHLS);
+    } catch (error) {
+      console.error("⚠️ No se pudo cargar el video:", error);
+      videoArea.innerHTML = `<p style="color:red;">No se pudo cargar la cámara en vivo.</p>`;
+    }
   }
 
-  db.ref("tokens/" + token).once("value").then(snapshot => {
-    const datos = snapshot.val();
+  function actualizarTemporizador() {
+    const expiracion = parseInt(localStorage.getItem('cliente_expiracion')) || 0;
+    const ahora = Date.now();
+    const diferencia = expiracion - ahora;
 
-    if (!datos || ahora < datos.inicio || ahora > datos.expiracion) {
-      alert("Token inválido o fuera de su vigencia.");
+    if (diferencia <= 0) {
+      alert("Tu acceso ha expirado. Gracias por visitarnos.");
       localStorage.clear();
       window.location.href = "index.html";
       return;
     }
 
-    cargarVideoPreferido();
-    actualizarTemporizador();
+    const minutos = Math.floor(diferencia / 60000);
+    const segundos = Math.floor((diferencia % 60000) / 1000);
+    timeLeftSpan.textContent = `${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+  }
 
-    const intervalo = setInterval(() => {
-      const expiracionLocal = parseInt(localStorage.getItem('cliente_expiracion')) || 0;
-      const ahoraLocal = Date.now();
-      const diff = expiracionLocal - ahoraLocal;
+  function validarSesionCliente() {
+    const token = localStorage.getItem(tokenKey);
+    const ahora = Date.now();
+    let clienteExpiracion = parseInt(localStorage.getItem('cliente_expiracion'));
 
-      if (diff <= 0) {
-        clearInterval(intervalo);
-        mostrarAccesoExpirado();
-      } else {
-        actualizarTemporizador();
-      }
-    }, 1000);
+    if (!clienteExpiracion) {
+      clienteExpiracion = ahora + 60 * 60 * 1000;
+      localStorage.setItem('cliente_expiracion', clienteExpiracion);
+    }
 
-  }).catch(error => {
-    console.error("Error al validar el token:", error);
-    alert("Error al validar la sesión.");
-    localStorage.clear();
-    window.location.href = "index.html";
-  });
-}
+    if (!token) {
+      alert("Sesión no válida. Inicia sesión nuevamente.");
+      localStorage.clear();
+      window.location.href = "index.html";
+      return;
+    }
 
+    db.ref("tokens/" + token).once("value").then(snapshot => {
+      const datos = snapshot.val();
 
-    // Función para ocultar video y mostrar botón cuando el acceso expire
-    function mostrarAccesoExpirado() {
-      const videoArea = document.getElementById('videoArea');
-      videoArea.innerHTML = ''; // Quitar video
-
-              // Mostrar botón de volver al inicio (si no existe)
-        let botonInicio = document.getElementById('botonInicio');
-    if (!botonInicio) {
-      // Crear contenedor
-      const contenedorBoton = document.createElement('div');
-      contenedorBoton.id = 'contenedorBoton';
-      contenedorBoton.style.display = 'flex'; // Mostrar el contenedor
-
-      // Crear botón
-      botonInicio = document.createElement('button');
-      botonInicio.id = 'botonInicio';
-      botonInicio.textContent = 'Volver al inicio';
-
-      botonInicio.addEventListener('click', () => {
+      if (!datos || ahora < datos.inicio || ahora > datos.expiracion) {
+        alert("Token inválido o fuera de vigencia.");
         localStorage.clear();
-        window.location.href = 'index.html';
-      });
+        window.location.href = "index.html";
+        return;
+      }
 
-      contenedorBoton.appendChild(botonInicio);
-      videoArea.appendChild(contenedorBoton);
-    }
+      cargarVideo();
+      actualizarTemporizador();
 
+      const intervalo = setInterval(() => {
+        const expiracionLocal = parseInt(localStorage.getItem('cliente_expiracion')) || 0;
+        const ahoraLocal = Date.now();
+        const diff = expiracionLocal - ahoraLocal;
 
+        if (diff <= 0) {
+          clearInterval(intervalo);
+          mostrarAccesoExpirado();
+        } else {
+          actualizarTemporizador();
+        }
+      }, 1000);
 
-      // Ocultar botón logout porque ya no hay sesión
-      document.getElementById('logoutBtn').style.display = 'none';
-
-      // Actualizar el temporizador a 00:00
-      timeLeftSpan.textContent = '00:00';
-    }
-
-    validarSesionCliente();
-
-    document.getElementById('logoutBtn').addEventListener('click', () => {
+    }).catch(error => {
+      console.error("Error al validar token:", error);
+      alert("Error en la sesión.");
       localStorage.clear();
       window.location.href = "index.html";
     });
+  }
 
-    // Carrusel de promociones
-    const slides = document.querySelectorAll('.promo-slide');
-    let currentIndex = 0;
+  function mostrarAccesoExpirado() {
+    videoArea.innerHTML = '';
+    document.getElementById('logoutBtn').style.display = 'none';
+    timeLeftSpan.textContent = '00:00';
 
-    function showNextSlide() {
-      slides[currentIndex].classList.remove('active');
-      currentIndex = (currentIndex + 1) % slides.length;
-      slides[currentIndex].classList.add('active');
-    }
-
-    setInterval(showNextSlide, 5000);
-
-    // Clasificar imágenes según su orientación
-    slides.forEach(img => {
-      img.addEventListener('load', () => {
-        const isHorizontal = img.naturalWidth >= img.naturalHeight;
-        img.classList.add(isHorizontal ? 'horizontal' : 'vertical');
-      });
-
-      // Por si ya están cargadas (caché)
-      if (img.complete) {
-        const isHorizontal = img.naturalWidth >= img.naturalHeight;
-        img.classList.add(isHorizontal ? 'horizontal' : 'vertical');
-      }
+    const contenedor = document.createElement('div');
+    const botonInicio = document.createElement('button');
+    botonInicio.textContent = 'Volver al inicio';
+    botonInicio.addEventListener('click', () => {
+      localStorage.clear();
+      window.location.href = 'index.html';
     });
-  </script>
+
+    contenedor.appendChild(botonInicio);
+    videoArea.appendChild(contenedor);
+  }
+
+  validarSesionCliente();
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.clear();
+    window.location.href = "index.html";
+  });
+
+  // Carrusel de promociones
+  const slides = document.querySelectorAll('.promo-slide');
+  let currentIndex = 0;
+
+  function showNextSlide() {
+    slides[currentIndex].classList.remove('active');
+    currentIndex = (currentIndex + 1) % slides.length;
+    slides[currentIndex].classList.add('active');
+  }
+
+  setInterval(showNextSlide, 5000);
+
+  slides.forEach(img => {
+    img.addEventListener('load', () => {
+      const isHorizontal = img.naturalWidth >= img.naturalHeight;
+      img.classList.add(isHorizontal ? 'horizontal' : 'vertical');
+    });
+
+    if (img.complete) {
+      const isHorizontal = img.naturalWidth >= img.naturalHeight;
+      img.classList.add(isHorizontal ? 'horizontal' : 'vertical');
+    }
+  });
+</script>
 </body>
 </html>
