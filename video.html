@@ -14,6 +14,11 @@
       width: 100%;
       height: 360px;
     }
+    .error-msg {
+      color: red;
+      font-weight: bold;
+      padding: 10px;
+    }
   </style>
 </head>
 <body>
@@ -104,7 +109,7 @@
         videoArea.appendChild(videoHLS);
       } catch (error) {
         console.error("⚠️ No se pudo cargar el video:", error);
-        videoArea.innerHTML = <p style="color:red;">No se pudo cargar la cámara en vivo.</p>;
+        videoArea.innerHTML = '<p class="error-msg">⚠️ No se pudo cargar la cámara en vivo.</p>';
       }
     }
 
@@ -124,7 +129,6 @@
       const segundos = Math.floor((diferencia % 60000) / 1000);
       timeLeftSpan.textContent = `${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
     }
-  
 
     function validarSesionCliente() {
       const token = localStorage.getItem(tokenKey);
@@ -225,4 +229,4 @@
     });
   </script>
 </body>
-</html> 
+</html>
